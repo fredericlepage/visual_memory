@@ -2,6 +2,7 @@ import pygame
 import sys
 import time
 import random
+import math
 
 # Dimensions constants
 SIZE = WIDTH, HEIGHT = 800, 600
@@ -9,44 +10,25 @@ GRID_LENGTH = min(HEIGHT * 0.85 , WIDTH)
 HEIGHT_SPACE = HEIGHT - GRID_LENGTH
 WIDTH_SPACE = WIDTH - GRID_LENGTH
 
-# Game settings constants
-STARTING_LEVEL = 1
-INITIAL_LIVES = 1
-DELAY = 1000
-ALLOWED_MISTAKES = 2
-
 # Color constants
 WHITE = 255,255,255
-BLACK = 0,0,0
+BLACK = 0,70,118
 LIGHT_BLUE = 0,150,255
 DARK_BLUE = 0,120,205
+PURPLE = 48,25,52
+
+# Game settings constants
+STARTING_LEVEL = 1
+INITIAL_LIVES = 3
+DELAY = 1000
+ALLOWED_MISTAKES = 2
 
 # Global variables
 level = STARTING_LEVEL
 lives = INITIAL_LIVES
 mistakes = 0
-difficulty_settings = {1: [3, 3],
-                    2: [3, 4],
-                    3: [4, 5],
-                    4: [4, 6],
-                    5: [4, 7],
-                    6: [5, 8],
-                    7: [5, 9],
-                    8: [5, 10],
-                    9: [6, 11],
-                    10: [6, 12],
-                    11: [6, 13],
-                    12: [6, 14],
-                    13: [6, 15],
-                    14: [7, 16],
-                    15: [7, 17],
-                    16: [7, 18],
-                    17: [7, 19],
-                    18: [7, 20],
-                    19: [8, 21],
-                    20: [8, 22],
-                    21: [8, 23]
-}
+grid_size = 0
+lost = False
 
 def main():
 
@@ -129,28 +111,35 @@ def play_game(screen):
     Main game loop that is run when the player starts a new game,
     either from the main menu or the end screen
     """
+    global grid_size
+    global lost
+
+    grid_size = 0       # Set grid_size back to zero so that get_difficulty()
+                        # can calculate it back from the initial level
+    lost = False        # New game is started, so reset the lost variable
+
     while True:
         screen.fill(LIGHT_BLUE)     # Fill the screen background
         print_top_text(screen)      # Show "level" in the top of the screen
         show_lives(screen)          # Show remaining lives in the top of the screen
 
         # Determine grid size and number of flashing squares according to the level
-        grid_size, num_flash_squares = difficulty_settings[level]
+        num_flash_squares = get_difficulty()
         grid = [[0 for x in range(grid_size)] for y in range(grid_size)] # Generate grid from grid size
 
         # Initialize the empty grid
-        clear_grid(screen, grid_size)
+        clear_grid(screen)
         time.sleep(1.5)
 
         # Randomly determine which squares will flash on the grid
-        generate_flash_squares(grid, grid_size, num_flash_squares)
+        generate_flash_squares(grid, num_flash_squares)
 
         # Draw the grid with the flashing squares
-        rectangles = draw_grid(screen, grid, grid_size)
+        rectangles = draw_grid(screen, grid)
         time.sleep(DELAY / 1000)  # DELAY / 1000 to convert milliseconds in seconds
 
         # Go back to showing an empty grid on the screen
-        clear_grid(screen, grid_size)
+        clear_grid(screen)
 
         # Let the player attempt to click the squares
         end_of_level(rectangles, screen, grid, num_flash_squares)
@@ -183,25 +172,25 @@ def settings(surface):
                     print_level_settings(surface, DARK_BLUE, WHITE)
                 else:
                     level_setting_active = False
-                    print_level_settings(surface, WHITE, LIGHT_BLUE)
+                    print_level_settings(surface, WHITE, PURPLE)
                 if delay_rect.collidepoint(pygame.mouse.get_pos()):
                     delay_setting_active = True
                     print_delay_settings(surface, DARK_BLUE, WHITE)
                 else:
                     delay_setting_active = False
-                    print_delay_settings(surface, WHITE, LIGHT_BLUE)
+                    print_delay_settings(surface, WHITE, PURPLE)
                 if lives_rect.collidepoint(pygame.mouse.get_pos()):
                     lives_setting_active = True
                     print_lives_settings(surface, DARK_BLUE, WHITE)
                 else:
                     lives_setting_active = False
-                    print_lives_settings(surface, WHITE, LIGHT_BLUE)
+                    print_lives_settings(surface, WHITE, PURPLE)
                 if mistakes_rect.collidepoint(pygame.mouse.get_pos()):
                     mistakes_setting_active = True
                     print_mistakes_settings(surface, DARK_BLUE, WHITE)
                 else:
                     mistakes_setting_active = False
-                    print_mistakes_settings(surface, WHITE, LIGHT_BLUE)
+                    print_mistakes_settings(surface, WHITE, PURPLE)
                 if menu_rect.collidepoint(pygame.mouse.get_pos()):
                     menu(surface)
 
@@ -253,19 +242,20 @@ def print_all_settings(surface):
     Print the text and buttons of the settings menu
     """
 
-    surface.fill(LIGHT_BLUE)     # Fill the screen background
+    surface.fill(PURPLE)     # Fill the screen background
 
-    font = pygame.font.Font("freesansbold.ttf", 80)
-    settings_text = font.render("Settings", True, WHITE, LIGHT_BLUE)
+    font = pygame.font.Font("freesansbold.ttf", 70)
+    settings_text = font.render("Settings", True, WHITE, PURPLE)
     settings_rect = settings_text.get_rect()
-    settings_rect.center = (WIDTH // 2, HEIGHT // 4)
+    settings_rect.left = WIDTH // 10
+    settings_rect.centery = HEIGHT // 5
     surface.blit(settings_text, settings_rect)
 
-    level_rect = print_level_settings(surface, WHITE, LIGHT_BLUE)
-    delay_rect = print_delay_settings(surface, WHITE, LIGHT_BLUE)
-    lives_rect = print_lives_settings(surface, WHITE, LIGHT_BLUE)
-    mistakes_rect = print_mistakes_settings(surface, WHITE, LIGHT_BLUE)
-    menu_rect = print_back_to_menu(surface, WHITE, LIGHT_BLUE)
+    level_rect = print_level_settings(surface, WHITE, PURPLE)
+    delay_rect = print_delay_settings(surface, WHITE, PURPLE)
+    lives_rect = print_lives_settings(surface, WHITE, PURPLE)
+    mistakes_rect = print_mistakes_settings(surface, WHITE, PURPLE)
+    menu_rect = print_back_to_menu(surface, WHITE, PURPLE)
 
     return level_rect, delay_rect, lives_rect, mistakes_rect, menu_rect
 
@@ -274,7 +264,8 @@ def print_level_settings(surface, fg_color, bg_color):
     font = pygame.font.Font("freesansbold.ttf", 40)
     level_text = font.render("Initial level: " + str(STARTING_LEVEL), True, fg_color, bg_color)
     level_rect = level_text.get_rect()
-    level_rect.center = (WIDTH // 2, HEIGHT // 2)
+    level_rect.left = WIDTH // 10
+    level_rect.centery = (HEIGHT // 2) - 65
     surface.blit(level_text, level_rect)
 
     pygame.display.flip()
@@ -285,7 +276,8 @@ def print_delay_settings(surface, fg_color, bg_color):
     font = pygame.font.Font("freesansbold.ttf", 40)
     delay_text = font.render("Flashing delay: " + str(DELAY), True, fg_color, bg_color)
     delay_rect = delay_text.get_rect()
-    delay_rect.center = (WIDTH // 2, (HEIGHT // 2) + 65)
+    delay_rect.left = WIDTH // 10
+    delay_rect.centery= HEIGHT // 2
     surface.blit(delay_text, delay_rect)
 
     pygame.display.flip()
@@ -296,7 +288,8 @@ def print_lives_settings(surface, fg_color, bg_color):
     font = pygame.font.Font("freesansbold.ttf", 40)
     lives_text = font.render("Initial lives: " + str(INITIAL_LIVES), True, fg_color, bg_color)
     lives_rect = lives_text.get_rect()
-    lives_rect.center = (WIDTH // 2, (HEIGHT // 2) + 130)
+    lives_rect.left = WIDTH // 10
+    lives_rect.centery= (HEIGHT // 2) + 65
     surface.blit(lives_text, lives_rect)
 
     pygame.display.flip()
@@ -307,7 +300,8 @@ def print_mistakes_settings(surface, fg_color, bg_color):
     font = pygame.font.Font("freesansbold.ttf", 40)
     mistakes_text = font.render("Allowed mistakes: " + str(ALLOWED_MISTAKES), True, fg_color, bg_color)
     mistakes_rect = mistakes_text.get_rect()
-    mistakes_rect.center = (WIDTH // 2, (HEIGHT // 2) + 195)
+    mistakes_rect.left = WIDTH // 10
+    mistakes_rect.centery= (HEIGHT // 2) + 130
     surface.blit(mistakes_text, mistakes_rect)
 
     pygame.display.flip()
@@ -318,20 +312,21 @@ def print_back_to_menu(surface, fg_color, bg_color):
     font = pygame.font.Font("freesansbold.ttf", 40)
     menu_text = font.render("Back to menu", True, fg_color, bg_color)
     menu_rect = menu_text.get_rect()
-    menu_rect.center = (WIDTH // 2, (HEIGHT // 2) + 260)
+    menu_rect.right = WIDTH * 0.9
+    menu_rect.centery= HEIGHT * 0.9
     surface.blit(menu_text, menu_rect)
 
     pygame.display.flip()
     return menu_rect
 
-def draw_grid(surface, grid, grid_dimension):
+def draw_grid(surface, grid):
     """
     Draw the initial grid on the screen, with the flashing squares
     """
     rectangles = []
-    block_size, margin = get_block_dimensions(grid_dimension)
-    for x in range(grid_dimension):
-        for y in range(grid_dimension):
+    block_size, margin = get_block_dimensions()
+    for x in range(grid_size):
+        for y in range(grid_size):
             rect = pygame.Rect(x*block_size + x*margin + WIDTH_SPACE // 2,
                             y*block_size + y*margin + HEIGHT_SPACE * 0.9,
                             block_size, block_size)
@@ -346,14 +341,14 @@ def draw_grid(surface, grid, grid_dimension):
     pygame.display.flip()
     return rectangles
 
-def clear_grid(surface, grid_dimension):
+def clear_grid(surface):
     """
     Clear the white squares on the grid, so that the grid becomes composed of only
     blue squares
     """
-    block_size, margin = get_block_dimensions(grid_dimension)
-    for x in range(grid_dimension):
-        for y in range(grid_dimension):
+    block_size, margin = get_block_dimensions()
+    for x in range(grid_size):
+        for y in range(grid_size):
             rect = pygame.Rect(x*block_size + x*margin + WIDTH_SPACE // 2,
                             y*block_size + y*margin + HEIGHT_SPACE*0.9,
                             block_size, block_size)
@@ -369,11 +364,14 @@ def end_of_level(rectangles, surface, grid, num_flash_squares):
     global level
     global lives
     global mistakes
+    global lost
 
     if click_squares(rectangles, surface, grid, num_flash_squares):
+        lost = False
         level += 1      # Increase the difficulty if the grid is successfully completed
         mistakes = 0    # Reset the mistake counter
     else:
+        lost = True
         lives -= 1      # Decrease the lives of the player in case of failure
         mistakes = 0    # Reset the mistake counter
     time.sleep(.25)
@@ -422,25 +420,25 @@ def change_color(surface, grid, rect, x, y):
         return 1     # Return 1 if the player clicks the right square
 
 
-def generate_flash_squares(grid, grid_dimension, num_flash_squares):
+def generate_flash_squares(grid, num_flash_squares):
     """
     Generate random x and y values where the squares on the grid will
     flash and disappear
     """
     i = 0
     while i < num_flash_squares:
-        x = random.randint(0, grid_dimension - 1)
-        y = random.randint(0, grid_dimension - 1)
+        x = random.randint(0, grid_size - 1)
+        y = random.randint(0, grid_size - 1)
         if grid[x][y] == 0:
             grid[x][y] = 1
             i += 1
 
-def get_block_dimensions(grid_dimension):
+def get_block_dimensions():
     """
     Determine the dimensions of the blocks that constitute the grid
     """
-    margin = int(GRID_LENGTH // 80)
-    block_size = (GRID_LENGTH - (grid_dimension - 1)*margin) / grid_dimension
+    margin = int(GRID_LENGTH // (40 + (7*grid_size)))
+    block_size = (GRID_LENGTH - (grid_size - 1)*margin) / grid_size
     return block_size, margin
 
 def end_screen(surface):
@@ -512,6 +510,51 @@ def show_lives(surface):
         pygame.draw.circle(surface, DARK_BLUE, (int(WIDTH // 2) +
                         int(GRID_LENGTH // 2) - 18 - i * 42,
                         int(HEIGHT_SPACE // 2)), 18)
+
+def get_difficulty():
+    """
+    Return the grid size nd th number of flashing square depending on
+    the level achieved by the player
+    """
+    global grid_size
+
+    num_flash_squares = level + 2
+
+    if not lost:
+        if grid_size:
+            # If the current grid size is known, verify if
+            # the grid size must be increased for the next level
+            if isqrt((num_flash_squares)*3 + 1) or isqrt((num_flash_squares)*3 + 3):
+                grid_size += 1
+
+        else:
+            # If there is no current grid size, find the grid size from
+            # the number of flashing squares
+            i = num_flash_squares
+            while i > 0:
+                if isqrt((i*3) + 1):
+                    grid_size = int(math.sqrt((i * 3) + 1))
+                    return num_flash_squares
+                elif isqrt((i*3) + 3):
+                    grid_size = int(math.sqrt((i * 3) + 3))
+                    return num_flash_squares
+                i -= 1
+
+    return num_flash_squares
+
+
+def isqrt(n):
+    """
+    return True if n is a perfect square
+    return False if n is not a perfect square
+    """
+    x = n
+    y = (x + 1) // 2
+    while y < x:
+        x = y
+        y = (x + n // x) // 2
+    return x**2 == n
+
 
 main()
 pygame.quit()
