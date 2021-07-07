@@ -36,6 +36,8 @@ def main():
     screen = pygame.display.set_mode(SIZE)    # Create the screen
     pygame.display.set_caption("Visual Memory")     # Set the window title
 
+    pygame.key.set_repeat(250,125)
+
     clock = pygame.time.Clock()
 
     running = True
@@ -66,6 +68,10 @@ def menu(surface):
                 if quit_rect.collidepoint(pygame.mouse.get_pos()):
                     pygame.quit()
                     sys.exit()
+
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
 def print_menu(surface):
     """
@@ -206,35 +212,45 @@ def settings(surface):
                         print_all_settings(surface)
                         print_delay_settings(surface, DARK_BLUE, WHITE)
                     if lives_setting_active:
-                        INITIAL_LIVES += 1
+                        if INITIAL_LIVES < 4:
+                            INITIAL_LIVES += 1
                         print_all_settings(surface)
                         print_lives_settings(surface, DARK_BLUE, WHITE)
                         lives = INITIAL_LIVES
                     if mistakes_setting_active:
-                        ALLOWED_MISTAKES += 1
+                        if ALLOWED_MISTAKES < 3:
+                            ALLOWED_MISTAKES += 1
                         print_all_settings(surface)
                         print_mistakes_settings(surface, DARK_BLUE, WHITE)
 
                 if event.key == pygame.K_DOWN:
                     if level_setting_active:
-                        STARTING_LEVEL -= 1
+                        if STARTING_LEVEL > 1:
+                            STARTING_LEVEL -= 1
                         print_all_settings(surface)
                         print_level_settings(surface, DARK_BLUE, WHITE)
                         level = STARTING_LEVEL
                     if delay_setting_active:
-                        DELAY -= 50
+                        if DELAY > 50:
+                            DELAY -= 50
                         print_all_settings(surface)
                         print_delay_settings(surface, DARK_BLUE, WHITE)
                     if lives_setting_active:
-                        INITIAL_LIVES -= 1
+                        if INITIAL_LIVES > 1:
+                            INITIAL_LIVES -= 1
                         print_all_settings(surface)
                         print_lives_settings(surface, DARK_BLUE, WHITE)
                         lives = INITIAL_LIVES
                     if mistakes_setting_active:
-                        ALLOWED_MISTAKES -= 1
+                        if ALLOWED_MISTAKES > 0:
+                            ALLOWED_MISTAKES -= 1
                         print_all_settings(surface)
                         print_mistakes_settings(surface, DARK_BLUE, WHITE)
 
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+                
     pygame.display.flip()
 
 def print_all_settings(surface):
@@ -400,6 +416,10 @@ def click_squares(rectangles, surface, grid, num_flash_squares):
                                 pygame.display.flip()
                                 return False    # Return False if player failed
 
+            if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
         pygame.display.flip()
 
 
@@ -462,6 +482,10 @@ def end_screen(surface):
                     play_game(surface)
                 if menu_rect.collidepoint(pygame.mouse.get_pos()):
                     menu(surface)
+    
+            if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
 
 def print_end_screen(surface):
     """
@@ -476,6 +500,132 @@ def print_end_screen(surface):
     level_rect = level_text.get_rect()
     level_rect.center = (WIDTH // 2, HEIGHT // 3)
     surface.blit(level_text, level_rect)
+
+    if level < 7:
+        # Show image
+        joe = pygame.image.load('src/images/joe.jpg')
+        joe = pygame.transform.scale(joe, (150,150))
+        surface.blit(joe, (617, 33))
+
+        # Print text
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        joe_text = font.render("c'mon man", True, WHITE, LIGHT_BLUE)
+        joe_rect = joe_text.get_rect()
+        joe_rect.top = 183
+        joe_rect.centerx = 692
+        surface.blit(joe_text, joe_rect)
+
+    elif level < 9:
+        # Show image
+        beetlejuice = pygame.image.load('src/images/lester.jpg')
+        beetlejuice = pygame.transform.scale(beetlejuice, (150,150))
+        surface.blit(beetlejuice, (617, 33))
+
+        # Print text
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        beetlejuice_text = font.render("smooth brain", True, WHITE, LIGHT_BLUE)
+        beetlejuice_rect = beetlejuice_text.get_rect()
+        beetlejuice_rect.top = 183
+        beetlejuice_rect.centerx = 692
+        surface.blit(beetlejuice_text, beetlejuice_rect)
+
+    elif level < 11:
+        # Show image
+        white_claw = pygame.image.load('src/images/white_claw.jpg')
+        white_claw = pygame.transform.scale(white_claw, (150,150))
+        surface.blit(white_claw, (617, 33))
+
+        # Print text
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        gabe_text = font.render("drunk?", True, WHITE, LIGHT_BLUE)
+        gabe_rect = gabe_text.get_rect()
+        gabe_rect.top = 183
+        gabe_rect.centerx = 692
+        surface.blit(gabe_text, gabe_rect)
+
+    elif level < 13:
+        # Show image
+        ben = pygame.image.load('src/images/ben.png')
+        ben = pygame.transform.scale(ben, (150,150))
+        surface.blit(ben, (617, 33))
+
+        # Print text
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        ben_text = font.render("mediocre", True, WHITE, LIGHT_BLUE)
+        ben_rect = ben_text.get_rect()
+        ben_rect.top = 183
+        ben_rect.centerx = 692
+        surface.blit(ben_text, ben_rect)
+
+    elif level == 13:
+        # Show image
+        phil = pygame.image.load('src/images/phil.jpg')
+        phil = pygame.transform.scale(phil, (150,150))
+        surface.blit(phil, (617, 33))
+
+        # Print text
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        phil_text = font.render("average", True, WHITE, LIGHT_BLUE)
+        phil_rect = phil_text.get_rect()
+        phil_rect.top = 183
+        phil_rect.centerx = 692
+        surface.blit(phil_text, phil_rect)
+
+    elif level < 16:
+        # Show image
+        monke = pygame.image.load('src/images/monke.jpg')
+        monke = pygame.transform.scale(monke, (150,150))
+        surface.blit(monke, (617, 33))
+
+        # Print text
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        monke_text = font.render("monke", True, WHITE, LIGHT_BLUE)
+        monke_rect = monke_text.get_rect()
+        monke_rect.top = 183
+        monke_rect.centerx = 692
+        surface.blit(monke_text, monke_rect)
+
+    elif level < 18:
+        # Show image
+        chad = pygame.image.load('src/images/chad.jpeg')
+        chad = pygame.transform.scale(chad, (150,150))
+        surface.blit(chad, (617, 33))
+
+        # Print text
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        chad_text = font.render("High IQ", True, WHITE, LIGHT_BLUE)
+        chad_rect = chad_text.get_rect()
+        chad_rect.top = 183
+        chad_rect.centerx = 692
+        surface.blit(chad_text, chad_rect)
+
+    elif level < 20:
+        # Show image
+        putin = pygame.image.load('src/images/putin.jpeg')
+        putin = pygame.transform.scale(putin, (150,150))
+        surface.blit(putin, (617, 33))
+
+        # Print text
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        putin_text = font.render("Wide IQ", True, WHITE, LIGHT_BLUE)
+        putin_rect = putin_text.get_rect()
+        putin_rect.top = 183
+        putin_rect.centerx = 692
+        surface.blit(putin_text, putin_rect)
+
+    elif level > 19:
+        # Show image
+        poire = pygame.image.load('src/images/image.png')
+        poire = pygame.transform.scale(poire, (150,150))
+        surface.blit(poire, (617, 33))
+
+        # Print text
+        font = pygame.font.Font("freesansbold.ttf", 30)
+        poire_text = font.render("genius", True, WHITE, LIGHT_BLUE)
+        poire_rect = poire_text.get_rect()
+        poire_rect.top = 183
+        poire_rect.centerx = 692
+        surface.blit(poire_text, poire_rect)
 
     # Print the "play again" button
     font = pygame.font.Font("freesansbold.ttf", 40)
@@ -553,8 +703,9 @@ def isqrt(n):
     while y < x:
         x = y
         y = (x + n // x) // 2
-    return x**2 == n
 
+    return x**2 == n
 
 main()
 pygame.quit()
+sys.exit()
